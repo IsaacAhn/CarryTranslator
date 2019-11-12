@@ -1,33 +1,45 @@
 % translator.m
-% GUI ±â¹İ ¼öÈ­ÀÎ½Ä ÇÁ·Î±×·¥
-function translator(net, netLSTM)
+% GUI ê¸°ë°˜ ìˆ˜í™”ì¸ì‹ í”„ë¡œê·¸ë¨
 
-% Àü¿ª º¯¼ö ¼±¾ğ
+function translator(net, netLSTM)
+%ë°ì´í„° ì €ì¥í•  ìë°” ì—°ê²°ë¦¬ìŠ¤íŠ¸ ìƒì„±
+import java.util.LinkedList
+q = LinkedList();
+%ì´ˆì„± ì¤‘ì„± ì¢…ì„±ì˜ ê°’
+cho1  = [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18];
+jung1 = [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20];
+jong1 = [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27];
+%ì „ì—­ ë³€ìˆ˜ ì„ ì–¸
+temp1 = [];
+temp2 = 0;
+temp3 = [""];
+countT = 1;
+accuracyR = ["a", "b"];
 clear k;
 global k;
 m = 0;
 
-% googleNet input ¼³Á¤
+% googleNet input ì„¤ì •
 netCNN = googlenet;
 inputSize = netCNN.Layers(1).InputSize(1:2);
 layerName = "pool5-7x7_s1";
 
-% Å°³ØÆ® ÃÊ±âÈ­
+% í‚¤ë„¥íŠ¸ ì´ˆê¸°í™”
 colorVid = videoinput('kinect', 1);
 depthVid = videoinput('kinect', 2);
 
-% ½ºÄÌ·¹Åæ ÀÎ½ÄÀ» À§ÇÑ depth Ä·
+% ìŠ¤ì¼ˆë ˆí†¤ ì¸ì‹ì„ ìœ„í•œ depth ìº 
 triggerconfig(depthVid, 'manual');
 depthVid.FramesPerTrigger = 1;
 depthVid.TriggerRepeat = inf;
 set(getselectedsource(depthVid), 'TrackingMode', 'Skeleton');
 
-% color Ä· ÃÊ±âÈ­
+% color ìº  ì´ˆê¸°í™”
 triggerconfig(colorVid, 'manual');
 colorVid.FramesPerTrigger = 1;
 colorVid.TriggerRepeat = inf;
 
-% ÇÔ¼ö¸¦ À§ÇÑ Å¸ÀÌ¸Ó ¼³Á¤
+% í•¨ìˆ˜ë¥¼ ìœ„í•œ íƒ€ì´ë¨¸ ì„¤ì •
 t2 = timer('Period', 0.1,'ExecutionMode', 'fixedRate');
 t2.TimerFcn = @dispDepth2;
 t = timer('Period', 0.1,'ExecutionMode', 'fixedRate');
@@ -35,175 +47,615 @@ t.TimerFcn = @dispDepth;
 t3 = timer('Period', 10,'ExecutionMode', 'fixedRate');
 t3.TimerFcn = @speechfc;
 
-% GUI ÇÁ·¹ÀÓ¿öÅ© ¼³Á¤
-window=figure('Color',[0.9255 0.9137 0.8471],'Name','Depth Camera',...
+% GUI í”„ë ˆì„ì›Œí¬ ì„¤ì •
+window=figure('Color',[0, 0, 0],'Name','Depth Camera',...
     'DockControl','off','Units','Pixels',...
     'toolbar','none',...
     'Position',[50 50 800 600]);
-
-% ¼öÈ­ ¹ø¿ª °á°úÃ¢ ¼³Á¤
+padd = uicontrol('Parent',window,'Style','text');
+set(padd,'String',' ','position',[70 120 670 140])
+padd.BackgroundColor = [1, 0.55 , 0];
+% ìˆ˜í™” ë²ˆì—­ ê²°ê³¼ì°½ ì„¤ì •
 b = uicontrol('Parent',window,'Style','text');
-set(b,'String','¼öÈ­ ¹ø¿ª °á°ú','position',[150 150 250 80])
-b.BackgroundColor = 'black';
-b.ForegroundColor = 'white';
+set(b,'String','ìˆ˜í™” í•©ì¹¨ ê²°ê³¼','position',[80 130 650 120])
+b.BackgroundColor = [1, 1 , 1];
+b.ForegroundColor = 'black';
 b.FontName = 'Dotum';
 b.FontSize = 30;
+b.FontWeight = 'bold';
 
-% STT °á°úÃ¢ ¼³Á¤
+d = uicontrol('Parent',window,'Style','text');
+set(d,'String','ìˆ˜í™”,ì§€í™” ë²ˆì—­ ê²°ê³¼','position',[420 440 320 120])
+d.BackgroundColor = [1, 1 , 1];
+d.ForegroundColor = 'black';
+d.FontName = 'Dotum';
+d.FontSize = 38;
+d.FontWeight = 'bold';
+
+% STT ê²°ê³¼ì°½ ì„¤ì •
 c = uicontrol('Parent',window,'Style','text');
-set(c,'String','À½¼º ÀÎ½Ä °á°ú','position',[450 150 250 80])
-c.BackgroundColor = 'black';
-c.ForegroundColor = 'white';
+set(c,'String','ìŒì„± ì¸ì‹ ê²°ê³¼','position',[420 290 320 120])
+c.BackgroundColor = [1, 1 , 1];
+c.ForegroundColor = 'black';
 c.FontName = 'Dotum';
 c.FontSize = 30;
+c.FontWeight = 'bold';
 
-% ÁöÈ­¸¦ ÀÎ½ÄÇÏ±â À§ÇÑ ¹öÆ° ¼³Á¤
+% ì§€í™”ë¥¼ ì¸ì‹í•˜ê¸° ìœ„í•œ ë²„íŠ¼ ì„¤ì •
 startb1=uicontrol('Parent',window,'Style','pushbutton','String',...
-    'ÁöÈ­',...
-    'FontSize',11 ,...
+    'ì§€í™”',...
+    'FontSize',20 ,...
     'Units','normalized',...
-    'Position',[0.1 0.02 0.16 0.08],...
+    'Position',[0.08 0.04 0.2 0.13],...
     'Callback',@startCallback);
+startb1.FontWeight = 'bold';
 
-% ±ËÀûÀ» ÀÎ½ÄÇÏ±â À§ÇÑ ¹öÆ° ¼³Á¤
+
+% ê¶¤ì ì„ ì¸ì‹í•˜ê¸° ìœ„í•œ ë²„íŠ¼ ì„¤ì •
 startb=uicontrol('Parent',window,'Style','pushbutton','String',...
-    '±ËÀû',...
-    'FontSize',11 ,...
+    'ìˆ˜í™”',...
+    'FontSize',20 ,...
     'Units','normalized',...
-    'Position',[0.3 0.02 0.16 0.08],...
+    'Position',[0.295 0.04 0.2 0.13],...
     'Callback',@startCallback2);
+startb.FontWeight = 'bold';
 
-% ÇÁ·Î±×·¥À» ¸ØÃß±â À§ÇÑ ¹öÆ° ¼³Á¤
+% í”„ë¡œê·¸ë¨ì„ ë©ˆì¶”ê¸° ìœ„í•œ ë²„íŠ¼ ì„¤ì •
 stopb=uicontrol('Parent',window,'Style','pushbutton','String',...
     'STOP',...
-    'FontSize',11 ,...
+    'FontSize',20 ,...
     'Units','normalized',...
-    'Position',[0.5 0.02 0.16 0.08],...
+    'Position',[0.51 0.04 0.2 0.13],...
     'Callback',@stopCallback);
+stopb.FontWeight = 'bold';
 
-% À½¼º ÀÎ½ÄÀ» ÇÏ±â À§ÇÑ ¹öÆ° ¼³Á¤
+% ìŒì„± ì¸ì‹ì„ í•˜ê¸° ìœ„í•œ ë²„íŠ¼ ì„¤ì •
 speechb=uicontrol('Parent',window,'Style','pushbutton','String',...
-    '¸»ÇÏ±â',...
-    'FontSize',11 ,...
+    'ë§í•˜ê¸°',...
+    'FontSize',20 ,...
     'Units','normalized',...
-    'Position',[0.7 0.02 0.16 0.08],...
+    'Position',[0.725 0.04 0.2 0.13],...
     'Callback',@speechCallback);
+speechb.BackgroundColor = '#ff8c00';
+speechb.ForegroundColor = 'white';
+speechb.FontWeight = 'bold';
 
-% ½ºÇÇÄ¡ ÇÔ¼ö ¼±¾ğ
+% ìŠ¤í”¼ì¹˜ í•¨ìˆ˜ ì„ ì–¸
     function speechfc(obj, event)
-        % ³ìÀ½ ½ÃÀÛ
+        % ë…¹ìŒ ì‹œì‘
         recObj = audiorecorder(44100, 16, 1);
         speechObject = speechClient('Google','languageCode','ko-KR');
         disp('Start speaking.')
         recordblocking(recObj, 5);
         disp('End of Recording.')
         
-        % ³ìÀ½ÇÑ À½¼ºÀ» ÆÄÀÏ·Î ÀúÀåÈÄ load
+        % ë…¹ìŒí•œ ìŒì„±ì„ íŒŒì¼ë¡œ ì €ì¥í›„ load
         filename = 'sample.wav';
         y = getaudiodata(recObj);
         audiowrite(filename, y, 48000);
         [samples, fs] = audioread('sample.wav');
         
-        % À½¼º ÆÄÀÏÀ» STT·Î ³»º¸³¿
+        % ìŒì„± íŒŒì¼ì„ STTë¡œ ë‚´ë³´ëƒ„
         outInfo = speech2text(speechObject, samples, fs);
         result = outInfo.Transcript;
-        set(c,'String', result,'position',[450 150 250 80])
+        set(c,'String', result,'position',[420 290 320 120])
     end
 
-% ÁöÈ­ ÇÔ¼ö
+% ì§€í™” í•¨ìˆ˜
     function dispDepth(obj, event)
         
-        % ¿µ»ó Ãâ·Â(0~4096 ·Î ÇÁ·¹ÀÓ ÀçÁöÁ¤)
+        % ì˜ìƒ ì¶œë ¥(0~4096 ë¡œ í”„ë ˆì„ ì¬ì§€ì •)
         trigger(depthVid);
         trigger(colorVid);
         [depthMap, ~, depthMetaData] = getdata(depthVid);
         [colorFrameData] = getdata(colorVid);
         idx = find(depthMetaData.IsSkeletonTracked);
-        subplot(2,2,1);
+        ax = subplot(2,2,1);
+        set(ax, 'position', [0.09,0.43 0.41 0.55]);
         imshow(colorFrameData);
         
-        % ¿µ»ó Ã³¸®
-        % ½ºÄÌ·¹Åæ ÃßÀûÀÌ µÆÀ» ¶§
+        % ì˜ìƒ ì²˜ë¦¬
+        % ìŠ¤ì¼ˆë ˆí†¤ ì¶”ì ì´ ëì„ ë•Œ
         if idx ~= 0
-            % ¿À¸¥¼Õ À§Ä¡ ÃßÀû
+            % ì˜¤ë¥¸ì† ìœ„ì¹˜ ì¶”ì 
             rightHand = depthMetaData.JointDepthIndices(12,:,idx);
             
-            % ¿À¸¥¼Õ µ¥ÀÌÅÍ°ª ÃßÃâ
+            % ì˜¤ë¥¸ì† ë°ì´í„°ê°’ ì¶”ì¶œ
             zCoord = 1e3*min(depthMetaData.JointWorldCoordinates(12,:,idx));
             radius = round(90 - zCoord / 50);
             rightHandBox = [rightHand-0.5*radius 1.2*radius 1.2*radius];
             
-            % »ç°¢ÇüÀ¸·Î ¿À¸¥¼Õ Å©·Ó
+            % ì‚¬ê°í˜•ìœ¼ë¡œ ì˜¤ë¥¸ì† í¬ë¡­
             rectangle('position', rightHandBox, 'EdgeColor', [1 1 0]);
             handDepthImage = imcrop(colorFrameData,rightHandBox);
             
-            % µ¥ÀÌÅÍ ÃßÃâÀÌ µÆÀ» ¶§
+            % ë°ì´í„° ì¶”ì¶œì´ ëì„ ë•Œ
             if ~isempty(handDepthImage)
                 temp = imresize(handDepthImage, [224 224]);
                 
-                % ±¸±Û³İÀ» È°¿ëÇÑ °á°ú ¿¹Ãø
+                % êµ¬ê¸€ë„·ì„ í™œìš©í•œ ê²°ê³¼ ì˜ˆì¸¡
                 YPred = classify(net,temp);
                 result = string(YPred);
                 
-                % tts °á°ú Ãâ·Â
-                set(b,'String', result,'position',[150 150 250 80])
-                tts(result)
+                accuracyR(countT) = result;
+                %í•©ì¹¨ì„ ëœ»í•˜ëŠ” ã…ƒì´ ë“¤ì–´ì˜¤ë©´ ì´ˆ ì¤‘ ì¢…ì„± ê³„ì‚° ë° ë°ì´í„° ì €ì¥
+                if result == 'ã…ƒ'
+                    q.add('!');
+                    q.add('@');
+                    for j=1:6
+                        if q.get(0)=='!'
+                            break;
+                        elseif q.get(0)~='!'
+                            temp1(j)=0;
+                        end
+                        for i=0:q.size()-1
+                            if q.size() == 2 || q.size() == 1
+                                break
+                            end
+                            if (q.get(i) == 'ã„±' || q.get(i) == 'ã„´' || q.get(i) == 'ã„·' || q.get(i) == 'ã„¹' ||q.get(i) == 'ã…' ||q.get(i) == 'ã…‚' ||q.get(i) == 'ã……' ||q.get(i) == 'ã…‡' ||q.get(i) == 'ã…ˆ' ||q.get(i) == 'ã…Š' ||q.get(i) == 'ã…‹' ||q.get(i) == 'ã…Œ' ||q.get(i) == 'ã…' ||q.get(i) == 'ã…')&&(q.get(i+1) == 'ã…'||q.get(i+1) == 'ã…'||q.get(i+1) == 'ã…‘'||q.get(i+1) == 'ã…’'||q.get(i+1) == 'ã…“'||q.get(i+1) == 'ã…”'||q.get(i+1) == 'ã…•'||q.get(i+1) == 'ã…–'||    q.get(i+1) == 'ã…—'||q.get(i+1) == 'ã…š'||q.get(i+1) == 'ã…›'||q.get(i+1) == 'ã…œ'||q.get(i+1) == 'ã…Ÿ'||q.get(i+1) == 'ã… '||q.get(i+1) == 'ã…¡'||q.get(i+1) == 'ã…¢'||q.get(i+1) == 'ã…£')&&(q.get(i+2) == 'ã„±' || q.get(i+2) == 'ã„´' || q.get(i+2) == 'ã„·' || q.get(i+2) == 'ã„¹' ||q.get(i+2) == 'ã…' ||q.get(i+2) == 'ã…‚' ||q.get(i+2) == 'ã……' ||q.get(i+2) == 'ã…‡' ||q.get(i+2) == 'ã…ˆ' ||q.get(i+2) == 'ã…Š' ||q.get(i+2) == 'ã…‹' ||q.get(i+2) == 'ã…Œ' ||q.get(i+2) == 'ã…' ||q.get(i+2) == 'ã…')
+                                switch(q.get(i))
+                                    case 'ã„±'
+                                        temp2 = temp2 + (cho1(1)*588);
+                                    case 'ã„´'
+                                        temp2 = temp2 + (cho1(3)*588);
+                                    case 'ã„·'
+                                        temp2 = temp2 + (cho1(4)*588);
+                                    case 'ã„¹'
+                                        temp2 = temp2 + (cho1(6)*588);
+                                    case 'ã…'
+                                        temp2 = temp2 + (cho1(7)*588);
+                                    case 'ã…‚'
+                                        temp2 = temp2 + (cho1(8)*588);
+                                    case 'ã……'
+                                        temp2 = temp2 + (cho1(10)*588);
+                                    case 'ã…‡'
+                                        temp2 = temp2 + (cho1(12)*588);
+                                    case 'ã…ˆ'
+                                        temp2 = temp2 + (cho1(13)*588);
+                                    case 'ã…Š'
+                                        temp2 = temp2 + (cho1(15)*588);
+                                    case 'ã…‹'
+                                        temp2 = temp2 + (cho1(16)*588);
+                                    case 'ã…Œ'
+                                        temp2 = temp2 + (cho1(17)*588);
+                                    case 'ã…'
+                                        temp2 = temp2 + (cho1(18)*588);
+                                    case 'ã…'
+                                        temp2 = temp2 + (cho1(19)*588);
+                                end
+                            elseif (q.get(i) == 'ã„±' || q.get(i) == 'ã„´' || q.get(i) == 'ã„·' || q.get(i) == 'ã„¹' ||q.get(i) == 'ã…' ||q.get(i) == 'ã…‚' ||q.get(i) == 'ã……' ||q.get(i) == 'ã…‡' ||q.get(i) == 'ã…ˆ' ||q.get(i) == 'ã…Š' ||q.get(i) == 'ã…‹' ||q.get(i) == 'ã…Œ' ||q.get(i) == 'ã…' ||q.get(i) == 'ã…')&&(q.get(i+1)=='ã…—'||q.get(i+1)=='ã…œ')&&(q.get(i+2)=='ã…'||q.get(i+2)=='ã…'||q.get(i+2)=='ã…£'||q.get(i+2)=='ã…“'||q.get(i+2)=='ã…”')
+                                switch(q.get(i))
+                                    case 'ã„±'
+                                        temp2 = temp2 + (cho1(1)*588);
+                                    case 'ã„´'
+                                        temp2 = temp2 + (cho1(3)*588);
+                                    case 'ã„·'
+                                        temp2 = temp2 + (cho1(4)*588);
+                                    case 'ã„¹'
+                                        temp2 = temp2 + (cho1(6)*588);
+                                    case 'ã…'
+                                        temp2 = temp2 + (cho1(7)*588);
+                                    case 'ã…‚'
+                                        temp2 = temp2 + (cho1(8)*588);
+                                    case 'ã……'
+                                        temp2 = temp2 + (cho1(10)*588);
+                                    case 'ã…‡'
+                                        temp2 = temp2 + (cho1(12)*588);
+                                    case 'ã…ˆ'
+                                        temp2 = temp2 + (cho1(13)*588);
+                                    case 'ã…Š'
+                                        temp2 = temp2 + (cho1(15)*588);
+                                    case 'ã…‹'
+                                        temp2 = temp2 + (cho1(16)*588);
+                                    case 'ã…Œ'
+                                        temp2 = temp2 + (cho1(17)*588);
+                                    case 'ã…'
+                                        temp2 = temp2 + (cho1(18)*588);
+                                    case 'ã…'
+                                        temp2 = temp2 + (cho1(19)*588);
+                                end
+                            elseif (q.get(i) == 'ã…—'||q.get(i) == 'ã…œ')&&(q.get(i+1)=='ã…'||q.get(i+1)=='ã…'||q.get(i+1)=='ã…£'||q.get(i+1)=='ã…“'||q.get(i+1)=='ã…”')&&(q.get(i+2) == 'ã„±' || q.get(i+2) == 'ã„´' || q.get(i+2) == 'ã„·' || q.get(i+2) == 'ã„¹' ||q.get(i+2) == 'ã…' ||q.get(i+2) == 'ã…‚' ||q.get(i+2) == 'ã……' ||q.get(i+2) == 'ã…‡' ||q.get(i+2) == 'ã…ˆ' ||q.get(i+2) == 'ã…Š' ||q.get(i+2) == 'ã…‹' ||q.get(i+2) == 'ã…Œ' ||q.get(i+2) == 'ã…' ||q.get(i+2) == 'ã…')
+                                if q.get(i) =='ã…—'
+                                    switch(q.get(i+1))
+                                        case 'ã…'
+                                            temp2 = temp2 + (jung1(10)*28);
+                                        case 'ã…'
+                                            temp2 = temp2 + (jung1(11)*28);
+                                        case 'ã…£'
+                                            temp2 = temp2 + (jung1(12)*28);
+                                    end
+                                    
+                                elseif q.get(i) =='ã…œ'
+                                    switch(q.get(i+1))
+                                        case 'ã…“'
+                                            temp2 = temp2 + (jung1(15)*28);
+                                        case 'ã…”'
+                                            temp2 = temp2 + (jung1(16)*28);
+                                        case 'ã…£'
+                                            temp2 = temp2 + (jung1(17)*28);
+                                    end
+                                end
+                                q.remove();
+                                q.remove();
+                                q.remove();
+                                break;
+                            elseif (q.get(i) == 'ã…—'||q.get(i) == 'ã…œ')&&(q.get(i+1)=='ã…'||q.get(i+1)=='ã…'||q.get(i+1)=='ã…£'||q.get(i+1)=='ã…“'||q.get(i+1)=='ã…”'||q.get(i+1)=='ã…£')&&q.get(i+2)=='!'
+                                if q.get(i) =='ã…—'
+                                    switch(q.get(i+1))
+                                        case 'ã…'
+                                            temp2 = temp2 + (jung1(10)*28);
+                                        case 'ã…'
+                                            temp2 = temp2 + (jung1(11)*28);
+                                        case 'ã…£'
+                                            temp2 = temp2 + (jung1(12)*28);
+                                    end
+                                    
+                                elseif q.get(i) =='ã…œ'
+                                    switch(q.get(i+1))
+                                        case 'ã…“'
+                                            temp2 = temp2 + (jung1(15)*28);
+                                        case 'ã…”'
+                                            temp2 = temp2 + (jung1(16)*28);
+                                        case 'ã…£'
+                                            temp2 = temp2 + (jung1(17)*28);
+                                    end
+                                end
+                                q.remove();
+                                q.remove();
+                                q.remove();
+                                break;
+                            elseif (q.get(i) == 'ã…'||q.get(i) == 'ã…'||q.get(i) == 'ã…‘'||q.get(i) == 'ã…’'||q.get(i) == 'ã…“'||q.get(i) == 'ã…”'||q.get(i) == 'ã…•'||q.get(i) == 'ã…–'||    q.get(i) == 'ã…—'||q.get(i) == 'ã…š'||q.get(i) == 'ã…›'||q.get(i) == 'ã…œ'||q.get(i) == 'ã…Ÿ'||q.get(i) == 'ã… '||q.get(i) == 'ã…¡'||q.get(i) == 'ã…¢'||q.get(i) == 'ã…£')&&(q.get(i+1) == 'ã„±' || q.get(i+1) == 'ã„´' || q.get(i+1) == 'ã„·' || q.get(i+1) == 'ã„¹' ||q.get(i+1) == 'ã…' ||q.get(i+1) == 'ã…‚' ||q.get(i+1) == 'ã……' ||q.get(i+1) == 'ã…‡' ||q.get(i+1) == 'ã…ˆ' ||q.get(i+1) == 'ã…Š' ||q.get(i+1) == 'ã…‹' ||q.get(i+1) == 'ã…Œ' ||q.get(i+1) == 'ã…' ||q.get(i+1) == 'ã…')&&(q.get(i+2) == 'ã„±' || q.get(i+2) == 'ã„´' || q.get(i+2) == 'ã„·' || q.get(i+2) == 'ã„¹' ||q.get(i+2) == 'ã…' ||q.get(i+2) == 'ã…‚' ||q.get(i+2) == 'ã……' ||q.get(i+2) == 'ã…‡' ||q.get(i+2) == 'ã…ˆ' ||q.get(i+2) == 'ã…Š' ||q.get(i+2) == 'ã…‹' ||q.get(i+2) == 'ã…Œ' ||q.get(i+2) == 'ã…' ||q.get(i+2) == 'ã…')
+                                switch(q.get(i))
+                                    case  'ã…'
+                                        temp2 = temp2 + (jung1(1)*28);
+                                    case  'ã…'
+                                        temp2 = temp2 + (jung1(2)*28);
+                                    case  'ã…‘'
+                                        temp2 = temp2 + (jung1(3)*28);
+                                    case  'ã…’'
+                                        temp2 = temp2 + (jung1(4)*28);
+                                    case  'ã…“'
+                                        temp2 = temp2 + (jung1(5)*28);
+                                    case  'ã…”'
+                                        temp2 = temp2 + (jung1(6)*28);
+                                    case  'ã…•'
+                                        temp2 = temp2 + (jung1(7)*28);
+                                    case  'ã…–'
+                                        temp2 = temp2 + (jung1(8)*28);
+                                    case  'ã…—'
+                                        temp2 = temp2 + (jung1(9)*28);
+                                    case  'ã…š'
+                                        temp2 = temp2 + (jung1(12)*28);
+                                    case  'ã…›'
+                                        temp2 = temp2 + (jung1(13)*28);
+                                    case  'ã…œ'
+                                        temp2 = temp2 + (jung1(14)*28);
+                                    case  'ã…Ÿ'
+                                        temp2 = temp2 + (jung1(17)*28);
+                                    case  'ã… '
+                                        temp2 = temp2 + (jung1(18)*28);
+                                    case  'ã…¡'
+                                        temp2 = temp2 + (jung1(19)*28);
+                                    case  'ã…¢'
+                                        temp2 = temp2 + (jung1(20)*28);
+                                    case  'ã…£'
+                                        temp2 = temp2 + (jung1(21)*28);
+                                end
+                            elseif (q.get(i) == 'ã…'||q.get(i) == 'ã…'||q.get(i) == 'ã…‘'||q.get(i) == 'ã…’'||q.get(i) == 'ã…“'||q.get(i) == 'ã…”'||q.get(i) == 'ã…•'||q.get(i) == 'ã…–'||    q.get(i) == 'ã…—'||q.get(i) == 'ã…š'||q.get(i) == 'ã…›'||q.get(i) == 'ã…œ'||q.get(i) == 'ã…Ÿ'||q.get(i) == 'ã… '||q.get(i) == 'ã…¡'||q.get(i) == 'ã…¢'||q.get(i) == 'ã…£')&&(q.get(i+1) == 'ã„±' || q.get(i+1) == 'ã„´' || q.get(i+1) == 'ã„·' || q.get(i+1) == 'ã„¹' ||q.get(i+1) == 'ã…' ||q.get(i+1) == 'ã…‚' ||q.get(i+1) == 'ã……' ||q.get(i+1) == 'ã…‡' ||q.get(i+1) == 'ã…ˆ' ||q.get(i+1) == 'ã…Š' ||q.get(i+1) == 'ã…‹' ||q.get(i+1) == 'ã…Œ' ||q.get(i+1) == 'ã…' ||q.get(i+1) == 'ã…')&&(q.get(i+2) == 'ã…'||q.get(i+2) == 'ã…'||q.get(i+2) == 'ã…‘'||q.get(i+2) == 'ã…’'||q.get(i+2) == 'ã…“'||q.get(i+2) == 'ã…”'||q.get(i+2) == 'ã…•'||q.get(i+2) == 'ã…–'||    q.get(i+2) == 'ã…—'||q.get(i+2) == 'ã…š'||q.get(i+2) == 'ã…›'||q.get(i+2) == 'ã…œ'||q.get(i+2) == 'ã…Ÿ'||q.get(i+2) == 'ã… '||q.get(i+2) == 'ã…¡'||q.get(i+2) == 'ã…¢'||q.get(i+2) == 'ã…£')
+                                switch(q.get(i))
+                                    case  'ã…'
+                                        temp2 = temp2 + (jung1(1)*28);
+                                    case  'ã…'
+                                        temp2 = temp2 + (jung1(2)*28);
+                                    case  'ã…‘'
+                                        temp2 = temp2 + (jung1(3)*28);
+                                    case  'ã…’'
+                                        temp2 = temp2 + (jung1(4)*28);
+                                    case  'ã…“'
+                                        temp2 = temp2 + (jung1(5)*28);
+                                    case  'ã…”'
+                                        temp2 = temp2 + (jung1(6)*28);
+                                    case  'ã…•'
+                                        temp2 = temp2 + (jung1(7)*28);
+                                    case  'ã…–'
+                                        temp2 = temp2 + (jung1(8)*28);
+                                    case  'ã…—'
+                                        temp2 = temp2 + (jung1(9)*28);
+                                    case  'ã…š'
+                                        temp2 = temp2 + (jung1(12)*28);
+                                    case  'ã…›'
+                                        temp2 = temp2 + (jung1(13)*28);
+                                    case  'ã…œ'
+                                        temp2 = temp2 + (jung1(14)*28);
+                                    case  'ã…Ÿ'
+                                        temp2 = temp2 + (jung1(17)*28);
+                                    case  'ã… '
+                                        temp2 = temp2 + (jung1(18)*28);
+                                    case  'ã…¡'
+                                        temp2 = temp2 + (jung1(19)*28);
+                                    case  'ã…¢'
+                                        temp2 = temp2 + (jung1(20)*28);
+                                    case  'ã…£'
+                                        temp2 = temp2 + (jung1(21)*28);
+                                end
+                                q.remove();
+                                q.remove();
+                                break;
+                            elseif (q.get(i) == 'ã„±' || q.get(i) == 'ã„´' || q.get(i) == 'ã„·' || q.get(i) == 'ã„¹' ||q.get(i) == 'ã…' ||q.get(i) == 'ã…‚' ||q.get(i) == 'ã……' ||q.get(i) == 'ã…‡' ||q.get(i) == 'ã…ˆ' ||q.get(i) == 'ã…Š' ||q.get(i) == 'ã…‹' ||q.get(i) == 'ã…Œ' ||q.get(i) == 'ã…' ||q.get(i) == 'ã…')&&(q.get(i+1) == 'ã„±' || q.get(i+1) == 'ã„´' || q.get(i+1) == 'ã„·' || q.get(i+1) == 'ã„¹' ||q.get(i+1) == 'ã…' ||q.get(i+1) == 'ã…‚' ||q.get(i+1) == 'ã……' ||q.get(i+1) == 'ã…‡' ||q.get(i+1) == 'ã…ˆ' ||q.get(i+1) == 'ã…Š' ||q.get(i+1) == 'ã…‹' ||q.get(i+1) == 'ã…Œ' ||q.get(i+1) == 'ã…' ||q.get(i+1) == 'ã…')&&(q.get(i+2) == 'ã…'||q.get(i+2) == 'ã…'||q.get(i+2) == 'ã…‘'||q.get(i+2) == 'ã…’'||q.get(i+2) == 'ã…“'||q.get(i+2) == 'ã…”'||q.get(i+2) == 'ã…•'||q.get(i+2) == 'ã…–'||    q.get(i+2) == 'ã…—'||q.get(i+2) == 'ã…š'||q.get(i+2) == 'ã…›'||q.get(i+2) == 'ã…œ'||q.get(i+2) == 'ã…Ÿ'||q.get(i+2) == 'ã… '||q.get(i+2) == 'ã…¡'||q.get(i+2) == 'ã…¢'||q.get(i+2) == 'ã…£')
+                                switch(q.get(i))
+                                    case  'ã„±'
+                                        temp2 = temp2 + jong1(2);
+                                    case  'ã„´'
+                                        temp2 = temp2 + jong1(5);
+                                    case  'ã„·'
+                                        temp2 = temp2 + jong1(8);
+                                    case  'ã„¹'
+                                        temp2 = temp2 + jong1(9);
+                                    case  'ã…'
+                                        temp2 = temp2 + jong1(17);
+                                    case  'ã…‚'
+                                        temp2 = temp2 + jong1(18);
+                                    case  'ã……'
+                                        temp2 = temp2 + jong1(20);
+                                    case  'ã…‡'
+                                        temp2 = temp2 + jong1(22);
+                                    case  'ã…ˆ'
+                                        temp2 = temp2 + jong1(23);
+                                    case  'ã…Š'
+                                        temp2 = temp2 + jong1(24);
+                                    case  'ã…‹'
+                                        temp2 = temp2 + jong1(25);
+                                    case  'ã…Œ'
+                                        temp2 = temp2 + jong1(26);
+                                    case  'ã…'
+                                        temp2 = temp2 + jong1(27);
+                                    case  'ã…'
+                                        temp2 = temp2 + jong1(28);
+                                end
+                                q.remove();
+                                q.remove();
+                                q.remove();
+                                break;
+                            elseif (q.get(i) == 'ã„±' || q.get(i) == 'ã„´' || q.get(i) == 'ã„·' || q.get(i) == 'ã„¹' ||q.get(i) == 'ã…' ||q.get(i) == 'ã…‚' ||q.get(i) == 'ã……' ||q.get(i) == 'ã…‡' ||q.get(i) == 'ã…ˆ' ||q.get(i) == 'ã…Š' ||q.get(i) == 'ã…‹' ||q.get(i) == 'ã…Œ' ||q.get(i) == 'ã…' ||q.get(i) == 'ã…')&&q.get(i+1)=='!'&&q.get(i+2)=='@'
+                                switch(q.get(i))
+                                    case  'ã„±'
+                                        temp2 = temp2 + jong1(2);
+                                    case  'ã„´'
+                                        temp2 = temp2 + jong1(5);
+                                    case  'ã„·'
+                                        temp2 = temp2 + jong1(8);
+                                    case  'ã„¹'
+                                        temp2 = temp2 + jong1(9);
+                                    case  'ã…'
+                                        temp2 = temp2 + jong1(17);
+                                    case  'ã…‚'
+                                        temp2 = temp2 + jong1(18);
+                                    case  'ã……'
+                                        temp2 = temp2 + jong1(20);
+                                    case  'ã…‡'
+                                        temp2 = temp2 + jong1(22);
+                                    case  'ã…ˆ'
+                                        temp2 = temp2 + jong1(23);
+                                    case  'ã…Š'
+                                        temp2 = temp2 + jong1(24);
+                                    case  'ã…‹'
+                                        temp2 = temp2 + jong1(25);
+                                    case  'ã…Œ'
+                                        temp2 = temp2 + jong1(26);
+                                    case  'ã…'
+                                        temp2 = temp2 + jong1(27);
+                                    case  'ã…'
+                                        temp2 = temp2 + jong1(28);
+                                end
+                                q.remove();
+                                q.remove();
+                                q.remove();
+                                break;
+                            elseif (q.get(i) == 'ã„±' || q.get(i) == 'ã„´' || q.get(i) == 'ã„·' || q.get(i) == 'ã„¹' ||q.get(i) == 'ã…' ||q.get(i) == 'ã…‚' ||q.get(i) == 'ã……' ||q.get(i) == 'ã…‡' ||q.get(i) == 'ã…ˆ' ||q.get(i) == 'ã…Š' ||q.get(i) == 'ã…‹' ||q.get(i) == 'ã…Œ' ||q.get(i) == 'ã…' ||q.get(i) == 'ã…')&&(q.get(i+1) == 'ã…'||q.get(i+1) == 'ã…'||q.get(i+1) == 'ã…‘'||q.get(i+1) == 'ã…’'||q.get(i+1) == 'ã…“'||q.get(i+1) == 'ã…”'||q.get(i+1) == 'ã…•'||q.get(i+1) == 'ã…–'||    q.get(i+1) == 'ã…—'||q.get(i+1) == 'ã…š'||q.get(i+1) == 'ã…›'||q.get(i+1) == 'ã…œ'||q.get(i+1) == 'ã…Ÿ'||q.get(i+1) == 'ã… '||q.get(i+1) == 'ã…¡'||q.get(i+1) == 'ã…¢'||q.get(i+1) == 'ã…£')&&q.get(i+2)=='!'
+                                switch(q.get(i))
+                                    case 'ã„±'
+                                        temp2 = temp2 + (cho1(1)*588);
+                                    case 'ã„´'
+                                        temp2 = temp2 + (cho1(3)*588);
+                                    case 'ã„·'
+                                        temp2 = temp2 + (cho1(4)*588);
+                                    case 'ã„¹'
+                                        temp2 = temp2 + (cho1(6)*588);
+                                    case 'ã…'
+                                        temp2 = temp2 + (cho1(7)*588);
+                                    case 'ã…‚'
+                                        temp2 = temp2 + (cho1(8)*588);
+                                    case 'ã……'
+                                        temp2 = temp2 + (cho1(10)*588);
+                                    case 'ã…‡'
+                                        temp2 = temp2 + (cho1(12)*588);
+                                    case 'ã…ˆ'
+                                        temp2 = temp2 + (cho1(13)*588);
+                                    case 'ã…Š'
+                                        temp2 = temp2 + (cho1(15)*588);
+                                    case 'ã…‹'
+                                        temp2 = temp2 + (cho1(16)*588);
+                                    case 'ã…Œ'
+                                        temp2 = temp2 + (cho1(17)*588);
+                                    case 'ã…'
+                                        temp2 = temp2 + (cho1(18)*588);
+                                    case 'ã…'
+                                        temp2 = temp2 + (cho1(19)*588);
+                                end
+                            elseif (q.get(i) == 'ã…'||q.get(i) == 'ã…'||q.get(i) == 'ã…‘'||q.get(i) == 'ã…’'||q.get(i) == 'ã…“'||q.get(i) == 'ã…”'||q.get(i) == 'ã…•'||q.get(i) == 'ã…–'||    q.get(i) == 'ã…—'||q.get(i) == 'ã…š'||q.get(i) == 'ã…›'||q.get(i) == 'ã…œ'||q.get(i) == 'ã…Ÿ'||q.get(i) == 'ã… '||q.get(i) == 'ã…¡'||q.get(i) == 'ã…¢'||q.get(i) == 'ã…£')&&(q.get(i+1) == 'ã„±' || q.get(i+1) == 'ã„´' || q.get(i+1) == 'ã„·' || q.get(i+1) == 'ã„¹' ||q.get(i+1) == 'ã…' ||q.get(i+1) == 'ã…‚' ||q.get(i+1) == 'ã……' ||q.get(i+1) == 'ã…‡' ||q.get(i+1) == 'ã…ˆ' ||q.get(i+1) == 'ã…Š' ||q.get(i+1) == 'ã…‹' ||q.get(i+1) == 'ã…Œ' ||q.get(i+1) == 'ã…' ||q.get(i+1) == 'ã…')&&q.get(i+2)=='!'
+                                switch(q.get(i))
+                                    case  'ã…'
+                                        temp2 = temp2 + (jung1(1)*28);
+                                    case  'ã…'
+                                        temp2 = temp2 + (jung1(2)*28);
+                                    case  'ã…‘'
+                                        temp2 = temp2 + (jung1(3)*28);
+                                    case  'ã…’'
+                                        temp2 = temp2 + (jung1(4)*28);
+                                    case  'ã…“'
+                                        temp2 = temp2 + (jung1(5)*28);
+                                    case  'ã…”'
+                                        temp2 = temp2 + (jung1(6)*28);
+                                    case  'ã…•'
+                                        temp2 = temp2 + (jung1(7)*28);
+                                    case  'ã…–'
+                                        temp2 = temp2 + (jung1(8)*28);
+                                    case  'ã…—'
+                                        temp2 = temp2 + (jung1(9)*28);
+                                    case  'ã…š'
+                                        temp2 = temp2 + (jung1(12)*28);
+                                    case  'ã…›'
+                                        temp2 = temp2 + (jung1(13)*28);
+                                    case  'ã…œ'
+                                        temp2 = temp2 + (jung1(14)*28);
+                                    case  'ã…Ÿ'
+                                        temp2 = temp2 + (jung1(17)*28);
+                                    case  'ã… '
+                                        temp2 = temp2 + (jung1(18)*28);
+                                    case  'ã…¡'
+                                        temp2 = temp2 + (jung1(19)*28);
+                                    case  'ã…¢'
+                                        temp2 = temp2 + (jung1(20)*28);
+                                    case  'ã…£'
+                                        temp2 = temp2 + (jung1(21)*28);
+                                end
+                            elseif (q.get(i) == 'ã…'||q.get(i) == 'ã…'||q.get(i) == 'ã…‘'||q.get(i) == 'ã…’'||q.get(i) == 'ã…“'||q.get(i) == 'ã…”'||q.get(i) == 'ã…•'||q.get(i) == 'ã…–'||    q.get(i) == 'ã…—'||q.get(i) == 'ã…š'||q.get(i) == 'ã…›'||q.get(i) == 'ã…œ'||q.get(i) == 'ã…Ÿ'||q.get(i) == 'ã… '||q.get(i) == 'ã…¡'||q.get(i) == 'ã…¢'||q.get(i) == 'ã…£')&&q.get(i+1)=='!'&&q.get(i+2)=='@'
+                                switch(q.get(i))
+                                    case  'ã…'
+                                        temp2 = temp2 + (jung1(1)*28);
+                                    case  'ã…'
+                                        temp2 = temp2 + (jung1(2)*28);
+                                    case  'ã…‘'
+                                        temp2 = temp2 + (jung1(3)*28);
+                                    case  'ã…’'
+                                        temp2 = temp2 + (jung1(4)*28);
+                                    case  'ã…“'
+                                        temp2 = temp2 + (jung1(5)*28);
+                                    case  'ã…”'
+                                        temp2 = temp2 + (jung1(6)*28);
+                                    case  'ã…•'
+                                        temp2 = temp2 + (jung1(7)*28);
+                                    case  'ã…–'
+                                        temp2 = temp2 + (jung1(8)*28);
+                                    case  'ã…—'
+                                        temp2 = temp2 + (jung1(9)*28);
+                                    case  'ã…š'
+                                        temp2 = temp2 + (jung1(12)*28);
+                                    case  'ã…›'
+                                        temp2 = temp2 + (jung1(13)*28);
+                                    case  'ã…œ'
+                                        temp2 = temp2 + (jung1(14)*28);
+                                    case  'ã…Ÿ'
+                                        temp2 = temp2 + (jung1(17)*28);
+                                    case  'ã… '
+                                        temp2 = temp2 + (jung1(18)*28);
+                                    case  'ã…¡'
+                                        temp2 = temp2 + (jung1(19)*28);
+                                    case  'ã…¢'
+                                        temp2 = temp2 + (jung1(20)*28);
+                                    case  'ã…£'
+                                        temp2 = temp2 + (jung1(21)*28);
+                                end
+                                q.remove();
+                                q.remove();
+                                break;
+                            end
+                            
+                        end
+                        temp1(j) = temp1(j) + temp2;
+                        temp2 = 0;
+                    end
+                    
+                    [m,n] = size(temp1);
+                    for h=1:n
+                        temp1(h) = temp1(h)+44032;
+                    end
+                    %ì €ì¥ëœ ë°ì´í„° ì¶œë ¥ë° tts ì¶œë ¥ 
+                    set(b,'String', char(temp1),'position',[80 130 650 120])
+                    tts(char(temp1))
+                    %ì €ì¥ëœ í ì‚­ì œ 
+                    for m=0:q.size()-1
+                        q.remove();
+                    end
+                    %ì „ì—­ë³€ìˆ˜ ì´ˆê¸°í™”
+                    temp1 = [];
+                    %ë²ˆì—­ ë©ˆì¶¤
+                    stop(depthVid);
+                    stop(colorVid);
+                    stop(t);
+                end
+                %ì •í™•ë„ ì¦ê°€ë¥¼ ìœ„í•´ 5ê°œì˜ ê°’ì´ ê°™ìœ¼ë©´ qì— ì €ì¥
+                if countT == 5
+                    if accuracyR(1) == accuracyR(2) && accuracyR(2) == accuracyR(3) && accuracyR(3) == accuracyR(4) && accuracyR(4) == accuracyR(5)
+                        set(d,'String', char(accuracyR(2)),'position',[420 440 320 120])
+                         % tts ê²°ê³¼ ì¶œë ¥ ë° qì— ì €ì¥
+                        tts(char(accuracyR(2)))
+                        q.add(char(accuracyR(1)));
+                    end
+                    countT = 0;
+                end
+                countT = countT + 1;
             end
         end
+        
+        
     end
 
-% ±ËÀû ÇÔ¼ö ¼±¾ğ
+% ê¶¤ì  í•¨ìˆ˜ ì„ ì–¸
     function dispDepth2(obj, event)
         
-        % ¿µ»ó Ãâ·Â
+        % ì˜ìƒ ì¶œë ¥
         trigger(depthVid);
         trigger(colorVid);
         [depthMap, ~, depthMetaData] = getdata(depthVid);
         [colorFrameData] = getdata(colorVid);
         idx = find(depthMetaData.IsSkeletonTracked);
-        subplot(2,2,1);
+        ax = subplot(2,2,1);
+        set(ax, 'position', [0.09,0.43 0.41 0.55]);
         imshow(colorFrameData);
         
-        % ¿µ»óÃ³¸®
-        % ½ºÄÌ·¹Åæ ÃßÀûÀÌ µÆÀ» ¶§
+        % ì˜ìƒì²˜ë¦¬
+        % ìŠ¤ì¼ˆë ˆí†¤ ì¶”ì ì´ ëì„ ë•Œ
         if idx ~= 0
             
-            % Ã´Ãß À§Ä¡ ±â¹İ »ó¹İ½Å ÃßÀû
+            % ì²™ì¶” ìœ„ì¹˜ ê¸°ë°˜ ìƒë°˜ì‹  ì¶”ì 
             body = depthMetaData.JointDepthIndices(3,:,idx);
             
-            % »ç°¢ÇüÀ¸·Î »ó¹İ½Å Å©·Ó
+            % ì‚¬ê°í˜•ìœ¼ë¡œ ìƒë°˜ì‹  í¬ë¡­
             radius = 300;
             bodyBox = [body(1)-0.75*radius body(2)-0.3*radius 1.5*radius radius];
             rectangle('position', bodyBox, 'EdgeColor', [1 1 0]);
             bodyImage = imcrop(colorFrameData,bodyBox);
             
-            % Å©·ÓÀÌ µÆÀ» ¶§
+            % í¬ë¡­ì´ ëì„ ë•Œ
             if ~isempty(bodyImage)
                 
-                % timer ÇÔ¼ö°¡ ºÒ¸± ¶§¸¶´Ù mÁõ°¡
+                % timer í•¨ìˆ˜ê°€ ë¶ˆë¦´ ë•Œë§ˆë‹¤ mì¦ê°€
                 m=m+1;
                 
-                % ÀÌ¹ÌÁö ¸®»çÀÌÂ¡ ÈÄ ÀúÀå
+                % ì´ë¯¸ì§€ ë¦¬ì‚¬ì´ì§• í›„ ì €ì¥
                 k(:,:,:,m)= uint8(imresize(bodyImage,[300,450]));
                 
-                % 10ÇÁ·¹ÀÓÀ¸·Î 3ÃÊ ÀÌÈÄ
+                % 10í”„ë ˆì„ìœ¼ë¡œ 3ì´ˆ ì´í›„
                 if(m==30)
                     
-                    % ÀúÀåÇÑ ÀÌ¹ÌÁö¸¦ ºñµğ¿À·Î ÀúÀå
+                    % ì €ì¥í•œ ì´ë¯¸ì§€ë¥¼ ë¹„ë””ì˜¤ë¡œ ì €ì¥
                     video = centerCrop(k,inputSize);
                     
-                    % ºñµğ¿À¸¦ ±¸±Û³İ¿¡ ¾Ë¸ÂÀº µ¥ÀÌÅÍ·Î º¯È¯
+                    % ë¹„ë””ì˜¤ë¥¼ êµ¬ê¸€ë„·ì— ì•Œë§ì€ ë°ì´í„°ë¡œ ë³€í™˜
                     sequences{1}= activations(netCNN,video,layerName,'OutputAs','columns');
                     
-                    % ±¸±Û³İÀ» È°¿ëÇÑ °á°ú ¿¹Ãø
+                    % êµ¬ê¸€ë„·ì„ í™œìš©í•œ ê²°ê³¼ ì˜ˆì¸¡
                     YPred = classify(netLSTM,sequences);
                     result = string(YPred);
                     
-                    % tts·Î °á°ú Ãâ·Â
-                    set(b,'String', result,'position',[150 150 250 80])
+                   
+                    % ttsë¡œ ê²°ê³¼ ì¶œë ¥
+                    set(d,'String', result,'position',[420 440 320 120])
                     tts(result)
-                    
+                    q.add(char(result));
                     m=0;
+                    
                 end
             else
                 m=0;
@@ -211,7 +663,7 @@ speechb=uicontrol('Parent',window,'Style','pushbutton','String',...
         end
     end
 
-% °¢ ±â´É¿¡ ´ëÇÑ callback ÇÔ¼ö ¼±¾ğ
+% ê° ê¸°ëŠ¥ì— ëŒ€í•œ callback í•¨ìˆ˜ ì„ ì–¸
     function startCallback2(obj, event)
         start(depthVid);
         start(colorVid);
@@ -223,12 +675,40 @@ speechb=uicontrol('Parent',window,'Style','pushbutton','String',...
         start(colorVid);
         start(t);
     end
-
+    
     function stopCallback(obj, event)
-        stop(depthVid);
-        stop(colorVid);
-        stop(t);
-        stop(t2);
+         %ìŠ¤íƒ‘ ëˆ„ë¥´ë©´ ì €ì¥ëœ ë°ì´í„° ë¬¸ì¥ìœ¼ë¡œ ì—°ê²°
+                        if q.size()-1 == 2
+                            for y=0:q.size()-1
+                                if y==0
+                                    temp3(y+1) = char(q.get(y)+"ëŠ”");
+                                elseif y==1
+                                    temp3(y+1) = char(q.get(y)+"ë¥¼"+" ");
+                                elseif y==2
+                                    temp3(y+1) = char(q.get(y)+" ");
+                                end
+                            end
+                        else
+                            for y=0:q.size()-1
+                                temp3(y+1) = char(q.get(y)+" ");
+                            end
+                        end
+                        %që°ì´í„° ì‚­ì œ
+                        for m=0:q.size()-1
+                            q.remove();
+                        end
+                        
+                        newstr = join(temp3);
+                        %ë¬¸ì¥ ì¶œë ¥
+                        set(b,'String', char(temp3),'position',[80 130 650 120])
+                        tts(char(newstr))
+                        %ì „ì—­ë³€ìˆ˜ ì´ˆê¸°í™”
+                        temp3 = [""];
+                        newstr = "";
+                        %ë²ˆì—­ ë©ˆì¶¤
+                        stop(depthVid);
+                        stop(colorVid);
+                        stop(t2);
     end
 
     function speechCallback(obj, event)
@@ -237,19 +717,19 @@ speechb=uicontrol('Parent',window,'Style','pushbutton','String',...
     end
 end
 
-% ºñµğ¿À ¸®»çÀÌÂ¡ ÇÔ¼ö ¼±¾ğ
+% ë¹„ë””ì˜¤ ë¦¬ì‚¬ì´ì§• í•¨ìˆ˜ ì„ ì–¸
 function videoResized = centerCrop(video,inputSize)
 
-% ºñµğ¿À »çÀÌÁî ÀúÀå
+% ë¹„ë””ì˜¤ ì‚¬ì´ì¦ˆ ì €ì¥
 sz = size(video);
 
-% ºñµğ¿À°¡ Ç³°æÀÏ ¶§
+% ë¹„ë””ì˜¤ê°€ í’ê²½ì¼ ë•Œ
 if sz(1) < sz(2)
     idx = floor((sz(2) - sz(1))/2);
     video(:,1:(idx-1),:,:) = [];
     video(:,(sz(1)+1):end,:,:) = [];
     
-    % ºñµğ¿À¿¡ ÀÎ¹°ÀÌ ÀÖÀ» ¶§
+    % ë¹„ë””ì˜¤ì— ì¸ë¬¼ì´ ìˆì„ ë•Œ
 elseif sz(2) < sz(1)
     
     idx = floor((sz(1) - sz(2))/2);
@@ -257,8 +737,7 @@ elseif sz(2) < sz(1)
     video((sz(2)+1):end,:,:,:) = [];
 end
 
-% ºñµğ¿À »çÀÌÁî º¯È¯
+% ë¹„ë””ì˜¤ ì‚¬ì´ì¦ˆ ë³€í™˜
 videoResized = imresize(video,inputSize(1:2));
 
 end
-
